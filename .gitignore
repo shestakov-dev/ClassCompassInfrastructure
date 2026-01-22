@@ -1,0 +1,14 @@
+# Logs
+logs
+*.log
+
+# dotenv environment variable files
+*.env
+*.env.development.local
+*.env.test.local
+*.env.production.local
+*.env.local
+
+# Configuration files
+config/databases/redis/users.acl
+config/ory/oathkeeper/jwks.json
