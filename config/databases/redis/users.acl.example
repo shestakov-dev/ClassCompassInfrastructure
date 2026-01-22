@@ -1,1 +1,1 @@
-user USERNAME on >PASSWORD ~* +@all
+user <YOUR_USERNAME> on ><YOUR_PASSWORD> ~* +@all
