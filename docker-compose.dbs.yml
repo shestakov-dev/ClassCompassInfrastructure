@@ -15,7 +15,7 @@ services:
    interval: 5s
    retries: 5
   networks:
-   - data-network
+   - app-data-network
 
  redis:
   image: redis:7-alpine
@@ -34,12 +34,12 @@ services:
    timeout: 3s
    retries: 5
   networks:
-   - data-network
+   - app-data-network
 
 volumes:
  postgres-data:
  redis-data:
 
 networks:
- data-network:
+ app-data-network:
   driver: bridge
