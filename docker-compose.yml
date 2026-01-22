@@ -35,7 +35,8 @@ services:
    redis:
     condition: service_healthy
   networks:
-   - backend-network
+   - service-network
+   - data-network
   labels:
    - "com.centurylinklabs.watchtower.enable=true"
 
@@ -47,7 +48,11 @@ services:
   restart: unless-stopped
   labels:
    - "com.centurylinklabs.watchtower.enable=true"
+  networks:
+   - service-network
 
 networks:
- backend-network:
+ service-network:
+  driver: bridge
+ data-network:
   driver: bridge

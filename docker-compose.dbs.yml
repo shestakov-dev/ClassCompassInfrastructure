@@ -15,7 +15,7 @@ services:
    interval: 5s
    retries: 5
   networks:
-   - backend-network
+   - data-network
 
  redis:
   image: redis:7-alpine
@@ -34,12 +34,12 @@ services:
    timeout: 3s
    retries: 5
   networks:
-   - backend-network
+   - data-network
 
 volumes:
  postgres-data:
  redis-data:
 
 networks:
- backend-network:
+ data-network:
   driver: bridge

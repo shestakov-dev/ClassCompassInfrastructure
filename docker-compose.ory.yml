@@ -11,7 +11,7 @@ services:
   volumes:
    - ./config/ory/oathkeeper:/config
   networks:
-   - ory-network
+   - service-network
 
  # Ory Kratos Migration
  kratos-migrate:
@@ -26,7 +26,7 @@ services:
    ory-postgres:
     condition: service_healthy
   networks:
-   - ory-network
+   - ory-data-network
 
  # Ory Kratos Service
  kratos:
@@ -46,7 +46,8 @@ services:
   volumes:
    - ./config/ory/kratos:/etc/config/kratos
   networks:
-   - ory-network
+   - service-network
+   - ory-data-network
 
  # Ory Keto Migration
  keto-migrate:
@@ -61,7 +62,7 @@ services:
    ory-postgres:
     condition: service_healthy
   networks:
-   - ory-network
+   - ory-data-network
 
  # Ory Keto Service
  keto:
@@ -81,7 +82,8 @@ services:
   command: serve -c /home/ory/keto.yml
   restart: on-failure
   networks:
-   - ory-network
+   - service-network
+   - ory-data-network
 
  # Ory Postgres
  ory-postgres:
@@ -99,11 +101,13 @@ services:
    interval: 5s
    retries: 5
   networks:
-   - ory-network
+   - ory-data-network
 
 volumes:
  postgres-ory-data:
 
 networks:
- ory-network:
+ ory-data-network:
+  driver: bridge
+ service-network:
   driver: bridge
