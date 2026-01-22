@@ -1,0 +1,45 @@
+name: class-compass-databases
+services:
+ postgres:
+  container_name: postgres
+  image: postgres:18-alpine
+  restart: unless-stopped
+  expose:
+   - "${POSTGRES_PORT:-5432}"
+  env_file:
+   - ./config/env/app-postgres.env
+  volumes:
+   - postgres-data:/var/lib/postgresql/data
+  healthcheck:
+   test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+   interval: 5s
+   retries: 5
+  networks:
+   - backend-network
+
+ redis:
+  image: redis:7-alpine
+  container_name: redis
+  restart: unless-stopped
+  expose:
+   - "6379"
+  volumes:
+   - ./config/databases/redis/redis.conf:/usr/local/etc/redis/redis.conf
+   - ./config/databases/redis/users.acl:/usr/local/etc/redis/users.acl
+   - redis-data:/data
+  command: redis-server /usr/local/etc/redis/redis.conf
+  healthcheck:
+   test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+   interval: 5s
+   timeout: 3s
+   retries: 5
+  networks:
+   - backend-network
+
+volumes:
+ postgres-data:
+ redis-data:
+
+networks:
+ backend-network:
+  driver: bridge
