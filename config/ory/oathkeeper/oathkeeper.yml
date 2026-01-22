@@ -1,0 +1,115 @@
+version: v0.40.9
+
+serve:
+ proxy:
+  port: 4455 # run the proxy at port 4455
+  trust_forwarded_headers: true
+  cors:
+   enabled: true
+   allow_credentials: true
+   allowed_origins:
+    - https://classcompass.shestakov.app
+    - https://api.classcompass.shestakov.app
+
+ api:
+  port: 4456 # run the api at port 4456
+  cors:
+   enabled: true
+   allow_credentials: true
+   allowed_origins:
+    - https://api.classcompass.shestakov.app
+
+access_rules:
+ matching_strategy: regexp
+ repositories:
+  - file:///config/rules.yml
+
+errors:
+ fallback:
+  - redirect
+  - json
+
+ handlers:
+  redirect:
+   enabled: true
+   config:
+    to: https://classcompass.shestakov.app/login
+    when:
+     - error:
+        - unauthorized
+       request:
+        header:
+         accept:
+          - text/html
+
+  json:
+   enabled: true
+   config:
+    verbose: true
+
+authenticators:
+ noop:
+  enabled: true
+ anonymous:
+  enabled: true
+  config:
+   subject: guest
+ cookie_session:
+  enabled: true
+  config:
+   check_session_url: http://kratos.classcompass.shestakov.app/sessions/whoami
+   force_method: GET
+   preserve_path: true
+   preserve_query: true
+   subject_from: identity.id
+   extra_from: "@this"
+   only:
+    - ory_kratos_session
+
+authorizers:
+ allow:
+  enabled: true
+ deny:
+  enabled: true
+ remote_json:
+  enabled: true
+  config:
+   remote: https://keto-read.classcompass.shestakov.app/relation-tuples/check
+   payload: |
+    {
+      "namespace": "{{- $rawNamespace := index .MatchContext.RegexpCaptureGroups 0 -}}
+                    {{- if eq $rawNamespace "schools" -}}School
+                    {{- else if eq $rawNamespace "users" -}}User
+                    {{- else if eq $rawNamespace "teachers" -}}User
+                    {{- else if eq $rawNamespace "students" -}}User
+                    {{- else if eq $rawNamespace "classes" -}}Class
+                    {{- else if eq $rawNamespace "subjects" -}}Subject
+                    {{- else if eq $rawNamespace "daily-schedules" -}}DailySchedule
+                    {{- else if eq $rawNamespace "lessons" -}}Lesson
+                    {{- else if eq $rawNamespace "buildings" -}}Building
+                    {{- else if eq $rawNamespace "floors" -}}Floor
+                    {{- else if eq $rawNamespace "rooms" -}}Room
+                    {{- else -}}UnknownResource
+                    {{- end }}",
+      "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 1 }}",
+      "relation": "{{- if eq .MatchContext.Method "GET" -}}view
+                   {{- else -}}manage
+                   {{- end -}}",
+      "subject_id": "{{ print .Subject }}"
+    }
+
+mutators:
+ noop:
+  enabled: true
+ id_token:
+  enabled: true
+  config:
+   issuer_url: https://api.classcompass.shestakov.app/
+   jwks_url: file:///config/jwks.json
+   claims: |
+    {
+      "sub": "{{ print .Subject }}",
+      "aud": ["class-compass-backend"],
+      "iss": "https://api.classcompass.shestakov.app/",
+      "session": {{ .Extra | toJson }}
+    }

@@ -1,0 +1,140 @@
+version: v1.3.0
+
+dev: false
+
+dsn: local
+
+serve:
+ public:
+  host: "0.0.0.0"
+  port: 4433
+ admin:
+  host: "0.0.0.0"
+  port: 4434
+
+identity:
+ default_schema_id: default
+ schemas:
+  - id: default
+    url: file:///etc/config/kratos/identity.schema.json
+
+selfservice:
+ default_browser_return_url: https://classcompass.shestakov.app/
+ allowed_return_urls:
+  - https://classcompass.shestakov.app
+  - https://api.classcompass.shestakov.app
+
+ flows:
+  settings:
+   ui_url: https://classcompass.shestakov.app/settings
+   lifespan: "15m"
+   privileged_session_max_age: "1h"
+   required_aal: highest_available
+   after:
+    default_browser_return_url: https://classcompass.shestakov.app/
+
+  logout:
+   after:
+    default_browser_return_url: https://classcompass.shestakov.app/
+
+  login:
+   ui_url: https://classcompass.shestakov.app/login
+   lifespan: "10m"
+   style: identifier_first
+   after:
+    default_browser_return_url: https://classcompass.shestakov.app/
+
+  verification:
+   enabled: false
+   ui_url: https://classcompass.shestakov.app/verification
+   lifespan: "1h"
+   use: code
+   notify_unknown_recipients: false
+   after:
+    default_browser_return_url: https://classcompass.shestakov.app/
+
+  recovery:
+   enabled: true
+   ui_url: https://classcompass.shestakov.app/recovery
+   lifespan: "1h"
+   use: code
+   notify_unknown_recipients: false
+   after:
+    default_browser_return_url: https://classcompass.shestakov.app/
+
+  registration:
+   enabled: false
+
+  error:
+   ui_url: https://classcompass.shestakov.app/error
+
+ methods:
+  oidc:
+   enabled: true
+   config:
+    providers:
+     - id: google
+       provider: google
+       client_id: THIS_VALUE_IS_REPLACED_BY_ENV
+       client_secret: THIS_VALUE_IS_REPLACED_BY_ENV
+       issuer_url: https://accounts.google.com
+       mapper_url: file:///etc/config/kratos/oidc.google.jsonnet
+       scope:
+        - email
+        - profile
+  passkey:
+   enabled: true
+   config:
+    rp:
+     display_name: Class Compass
+     id: classcompass.shestakov.app
+     origins:
+      - https://classcompass.shestakov.app
+  password:
+   enabled: true
+  totp:
+   enabled: true
+   config:
+    issuer: classcompass.shestakov.app
+  lookup_secret:
+   enabled: true
+  link:
+   enabled: true
+  code:
+   enabled: true
+  profile:
+   enabled: false
+
+courier:
+ delivery_strategy: smtp
+ smtp:
+  local_name: classcompass.shestakov.app
+
+secrets:
+ default:
+  - THIS_VALUE_IS_REPLACED_BY_ENV
+ cipher:
+  - THIS_VALUE_IS_REPLACED_BY_ENV___
+
+hashers:
+ algorithm: bcrypt
+ bcrypt:
+  cost: 12
+
+ciphers:
+ algorithm: xchacha20-poly1305
+
+cookies:
+ domain: .classcompass.shestakov.app
+ path: /
+ same_site: Lax
+
+session:
+ cookie:
+  domain: .classcompass.shestakov.app
+  path: /
+  same_site: Lax
+
+clients:
+ http:
+  disallow_private_ip_ranges: true

@@ -1,0 +1,355 @@
+- id: infrastructure:allow-oathkeeper
+  version: v25.4.0
+  upstream:
+   url: http://localhost:4456/
+  match:
+   url: https://oathkeeper.classcompass.shestakov.app/<.*>
+   methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  authenticators:
+   - handler: noop
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: noop
+- id: infrastructure:allow-kratos-public
+  version: v25.4.0
+  upstream:
+   url: http://kratos:4433/
+  match:
+   url: https://kratos.classcompass.shestakov.app/<.*>
+   methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  authenticators:
+   - handler: noop
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: noop
+- id: infrastructure:allow-kratos-admin
+  version: v25.4.0
+  upstream:
+   url: http://kratos:4434/
+  match:
+   url: https://kratos-admin.classcompass.shestakov.app/<.*>
+   methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  authenticators:
+   - handler: noop
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: noop
+- id: infrastructure:allow-keto-read
+  version: v25.4.0
+  upstream:
+   url: http://keto:4466/
+  match:
+   url: https://keto-read.classcompass.shestakov.app/<.*>
+   methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  authenticators:
+   - handler: noop
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: noop
+- id: infrastructure:allow-keto-write
+  version: v25.4.0
+  upstream:
+   url: http://keto:4467/
+  match:
+   url: https://keto-write.classcompass.shestakov.app/<.*>
+   methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  authenticators:
+   - handler: noop
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: noop
+- id: public:assets-swagger
+  description: Public access Swagger and assets endpoints
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/<api.*|assets/.*>
+   methods:
+    - GET
+    - POST
+    - OPTIONS
+  authenticators:
+   - handler: anonymous
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: id_token
+- id: public:invites
+  description: Public access invite endpoints for onboarding
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/invites/<(?:done/)?[0-9a-fA-F]+></?>
+   methods:
+    - GET
+  authenticators:
+   - handler: anonymous
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: id_token
+- id: resource:creation
+  description: Creation requests handled by the server (NestJS checks parent permissions)
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/<buildings|classes|daily-schedules|floors|lessons|rooms|students|subjects|teachers|users|invites></?>
+   methods:
+    - POST
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: id_token
+- id: resource:access
+  description: Requests for specific resource actions handled by the proxy
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/<buildings|classes|daily-schedules|floors|lessons|rooms|students|subjects|teachers|users>/<[0-9a-f-]{36}></?>
+   methods:
+    - GET
+    - PATCH
+    - DELETE
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: remote_json
+   config:
+    payload: |
+     {
+        "namespace": "{{- $resource := index .MatchContext.RegexpCaptureGroups 0 -}}
+                      {{- if eq $resource "users" -}}User
+                      {{- else if eq $resource "teachers" -}}Teacher
+                      {{- else if eq $resource "students" -}}Student
+                      {{- else if eq $resource "classes" -}}Class
+                      {{- else if eq $resource "subjects" -}}Subject
+                      {{- else if eq $resource "daily-schedules" -}}DailySchedule
+                      {{- else if eq $resource "lessons" -}}Lesson
+                      {{- else if eq $resource "buildings" -}}Building
+                      {{- else if eq $resource "floors" -}}Floor
+                      {{- else if eq $resource "rooms" -}}Room
+                      {{- else -}}UnknownResource
+                      {{- end }}",
+        "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 1 }}",
+        "relation": "{{- if eq .MatchContext.Method "GET" -}}view
+                     {{- else -}}manage
+                     {{- end -}}",
+        "subject_id": "{{ print .Subject }}"
+     }
+  mutators:
+   - handler: id_token
+- id: resource:get-collection
+  description: Requests for resource collections based on a parent handled by the proxy
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/<buildings|classes|daily-schedules|floors|lessons|rooms|students|subjects|teachers|users>/<school|class|building|daily-schedule|floor>/<[0-9a-f-]{36}></?>
+   methods:
+    - GET
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: remote_json
+   config:
+    payload: |
+     {
+        "namespace": "{{- $parentResource := index .MatchContext.RegexpCaptureGroups 1 -}}
+                      {{- if eq $parentResource "school" -}}School
+                      {{- else if eq $parentResource "class" -}}Class
+                      {{- else if eq $parentResource "building" -}}Building
+                      {{- else if eq $parentResource "daily-schedule" -}}DailySchedule
+                      {{- else if eq $parentResource "floor" -}}Floor
+                      {{- else -}}UnknownResource
+                      {{- end }}",
+        "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 2 }}",
+        "relation": "view",
+        "subject_id": "{{ print .Subject }}"
+     }
+  mutators:
+   - handler: id_token
+- id: users:get-by-identity
+  description: Request for user details by Kratos Identity ID handled by the server
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/users/identity/<[0-9a-f-]{36}></?>
+   methods:
+    - GET
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: id_token
+- id: schools:platform-global
+  description: Requests to create a school or list all schools handled by the proxy
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/schools</?>
+   methods:
+    - GET
+    - POST
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: remote_json
+   config:
+    payload: |
+     {
+       "namespace": "Platform",
+       "object": "ClassCompass",
+       "relation": "admins",
+       "subject_id": "{{ print .Subject }}"
+     }
+  mutators:
+   - handler: id_token
+- id: schools:platform-write-one
+  description: Requests to update or delete a school handled by the proxy
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/schools/<[0-9a-f-]{36}></?>
+   methods:
+    - PATCH
+    - DELETE
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: remote_json
+   config:
+    payload: |
+     {
+       "namespace": "Platform",
+       "object": "ClassCompass",
+       "relation": "admins",
+       "subject_id": "{{ print .Subject }}"
+     }
+  mutators:
+   - handler: id_token
+- id: schools:read-one
+  description: Request to read a specific school handled by the proxy
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/schools/<[0-9a-f-]{36}></?>
+   methods:
+    - GET
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: remote_json
+   config:
+    payload: |
+     {
+       "namespace": "School",
+       "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 0 }}",
+       "relation": "view",
+       "subject_id": "{{ print .Subject }}"
+     }
+  mutators:
+   - handler: id_token
+- id: schools:access-admins
+  description: Requests to promote or demote users to admins handled by the proxy
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/schools/<[0-9a-f-]{36}>/admins/<[0-9a-f-]{36}></?>
+   methods:
+    - GET
+    - POST
+    - DELETE
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: remote_json
+   config:
+    payload: |
+     {
+       "namespace": "School",
+       "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 0 }}",
+       "relation": "{{- if eq .MatchContext.Method "GET" -}}view
+                     {{- else -}}manage
+                     {{- end -}}",
+       "subject_id": "{{ print .Subject }}"
+     }
+  mutators:
+   - handler: id_token
+- id: schools:get-admins
+  description: Request to check whether a user is an admin handled by the proxy
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/schools/<[0-9a-f-]{36}>/admins</?>
+   methods:
+    - GET
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: remote_json
+   config:
+    payload: |
+     {
+       "namespace": "School",
+       "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 0 }}",
+       "relation": "manage",
+       "subject_id": "{{ print .Subject }}"
+     }
+  mutators:
+   - handler: id_token
+- id: website:allow-react
+  version: v25.4.0
+  upstream:
+   url: http://frontend:5173/
+  match:
+   url: https://classcompass.shestakov.app/<.*>
+   methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  authenticators:
+   - handler: noop
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: noop

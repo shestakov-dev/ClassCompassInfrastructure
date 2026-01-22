@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ory/keto/v0.14.0/.schema/config.schema.json
+version: v0.14.0
+
+dsn: local
+
+serve:
+  read:
+    port: 4466
+    host: "0.0.0.0"
+  write:
+    port: 4467
+    host: "0.0.0.0"
+
+
+
+namespaces:
+    location: file:///home/ory/namespaces.ts
+
+log:
+    level: debug
