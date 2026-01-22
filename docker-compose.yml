@@ -26,8 +26,8 @@ services:
   image: ghcr.io/shestakov-dev/class-compass-server:latest
   env_file:
    - ./config/env/server.env
-  ports:
-   - "8393:8393"
+  expose:
+   - "8393"
   restart: unless-stopped
   depends_on:
    postgres:
@@ -43,8 +43,8 @@ services:
  frontend:
   container_name: class-compass-frontend
   image: ghcr.io/shestakov-dev/class-compass-frontend:latest
-  ports:
-   - "5173:5173"
+  expose:
+   - "5173"
   restart: unless-stopped
   labels:
    - "com.centurylinklabs.watchtower.enable=true"
