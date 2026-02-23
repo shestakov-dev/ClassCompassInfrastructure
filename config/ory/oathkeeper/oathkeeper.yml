@@ -104,12 +104,12 @@ mutators:
  id_token:
   enabled: true
   config:
-   issuer_url: https://api.classcompass.shestakov.app/
+   issuer_url: https://oathkeeper.classcompass.shestakov.app/
    jwks_url: file:///config/jwks.json
    claims: |
     {
       "sub": "{{ print .Subject }}",
       "aud": ["class-compass-backend"],
-      "iss": "https://api.classcompass.shestakov.app/",
+      "iss": "https://oathkeeper.classcompass.shestakov.app/",
       "session": {{ .Extra | toJson }}
     }
