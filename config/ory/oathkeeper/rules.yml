@@ -93,6 +93,46 @@
    handler: allow
   mutators:
    - handler: noop
+- id: infrastructure:allow-minio
+  version: v25.4.0
+  upstream:
+   url: http://minio:9000/
+   preserve_host: true
+  match:
+   url: https://minio.classcompass.shestakov.app/<.*>
+   methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+    - HEAD
+  authenticators:
+   - handler: noop
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: noop
+- id: infrastructure:allow-minio-ui
+  version: v25.4.0
+  upstream:
+   url: http://minio:9001/
+  match:
+   url: https://minio-ui.classcompass.shestakov.app/<.*>
+   methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  authenticators:
+   - handler: noop
+  authorizer:
+   handler: allow
+  mutators:
+   - handler: noop
 - id: public:assets-swagger
   description: Public access Swagger and assets endpoints
   upstream:
@@ -200,6 +240,32 @@
                       {{- end }}",
         "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 2 }}",
         "relation": "view",
+        "subject_id": "{{ print .Subject }}"
+     }
+  mutators:
+   - handler: id_token
+- id: floors:plans
+  description: Requests to access and manage floor plans handled by the proxy
+  upstream:
+   url: http://server:8393/
+  match:
+   url: https://api.classcompass.shestakov.app/floors/<[0-9a-f-]{36}>/plan</?>
+   methods:
+    - GET
+    - PUT
+    - DELETE
+  authenticators:
+   - handler: cookie_session
+  authorizer:
+   handler: remote_json
+   config:
+    payload: |
+     {
+        "namespace": "Floor",
+        "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 0 }}",
+        "relation": "{{- if eq .MatchContext.Method "GET" -}}view
+                     {{- else -}}manage
+                     {{- end -}}",
         "subject_id": "{{ print .Subject }}"
      }
   mutators:

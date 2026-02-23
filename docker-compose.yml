@@ -2,7 +2,7 @@ name: class-compass
 
 include:
  - ./docker-compose.ory.yml
- - ./docker-compose.dbs.yml
+ - ./docker-compose.storage.yml
 
 services:
  # Automated Update Agent
@@ -34,6 +34,10 @@ services:
     condition: service_healthy
    redis:
     condition: service_healthy
+   kratos:
+    condition: service_started
+   keto:
+    condition: service_started
   networks:
    - service-network
    - app-data-network
@@ -43,6 +47,8 @@ services:
  frontend:
   container_name: class-compass-frontend
   image: ghcr.io/shestakov-dev/class-compass-frontend:latest
+  env_file:
+   - ./config/env/frontend.env
   expose:
    - "5173"
   restart: unless-stopped
