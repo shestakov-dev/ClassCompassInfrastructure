@@ -93,46 +93,6 @@
    handler: allow
   mutators:
    - handler: noop
-- id: infrastructure:allow-minio
-  version: v25.4.0
-  upstream:
-   url: http://minio:9000/
-   preserve_host: true
-  match:
-   url: https://minio.classcompass.shestakov.app/<.*>
-   methods:
-    - GET
-    - POST
-    - PUT
-    - PATCH
-    - DELETE
-    - OPTIONS
-    - HEAD
-  authenticators:
-   - handler: noop
-  authorizer:
-   handler: allow
-  mutators:
-   - handler: noop
-- id: infrastructure:allow-minio-ui
-  version: v25.4.0
-  upstream:
-   url: http://minio:9001/
-  match:
-   url: https://minio-ui.classcompass.shestakov.app/<.*>
-   methods:
-    - GET
-    - POST
-    - PUT
-    - PATCH
-    - DELETE
-    - OPTIONS
-  authenticators:
-   - handler: noop
-  authorizer:
-   handler: allow
-  mutators:
-   - handler: noop
 - id: public:assets-swagger
   description: Public access Swagger and assets endpoints
   upstream:
