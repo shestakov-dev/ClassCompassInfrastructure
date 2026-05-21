@@ -28,13 +28,13 @@ class School implements Namespace {
 		// Managing the school is something only platform admins can do
 		manage: (ctx: Context): boolean =>
 			this.related.parentPlatform.traverse(platform =>
-				platform.permits.manage(ctx)
+				platform.permits.manage(ctx),
 			) || this.related.admins.includes(ctx.subject),
 
 		// Admins can also read
 		view: (ctx: Context): boolean =>
 			this.related.parentPlatform.traverse(platform =>
-				platform.permits.manage(ctx)
+				platform.permits.manage(ctx),
 			) ||
 			this.related.admins.includes(ctx.subject) ||
 			this.related.members.includes(ctx.subject),
@@ -131,7 +131,7 @@ class Floor implements Namespace {
 	permits = {
 		manage: (ctx: Context): boolean =>
 			this.related.parentBuilding.traverse(building =>
-				building.permits.manage(ctx)
+				building.permits.manage(ctx),
 			),
 		view: (ctx: Context): boolean =>
 			this.related.parentBuilding.traverse(building => building.permits.view(ctx)),
@@ -139,6 +139,19 @@ class Floor implements Namespace {
 }
 
 class DailySchedule implements Namespace {
+	related: {
+		parentClass: Class[];
+	};
+
+	permits = {
+		manage: (ctx: Context): boolean =>
+			this.related.parentClass.traverse(_class => _class.permits.manage(ctx)),
+		view: (ctx: Context): boolean =>
+			this.related.parentClass.traverse(_class => _class.permits.view(ctx)),
+	};
+}
+
+class Lesson implements Namespace {
 	related: {
 		parentClass: Class[];
 	};
@@ -163,24 +176,5 @@ class Room implements Namespace {
 			this.related.parentFloor.traverse(floor => floor.permits.manage(ctx)),
 		view: (ctx: Context): boolean =>
 			this.related.parentFloor.traverse(floor => floor.permits.view(ctx)),
-	};
-}
-
-class Lesson implements Namespace {
-	related: {
-		// We could also inherit permissions via another path, e.g. Subject,
-		// but for simplicity, we use DailySchedule here
-		parentDailySchedule: DailySchedule[];
-	};
-
-	permits = {
-		manage: (ctx: Context): boolean =>
-			this.related.parentDailySchedule.traverse(dailySchedule =>
-				dailySchedule.permits.manage(ctx)
-			),
-		view: (ctx: Context): boolean =>
-			this.related.parentDailySchedule.traverse(dailySchedule =>
-				dailySchedule.permits.view(ctx)
-			),
 	};
 }
