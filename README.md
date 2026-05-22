@@ -2,6 +2,18 @@
 
 This repository contains the infrastructure configuration for ClassCompass, managed via Docker Compose.
 
+## System Overview
+
+ClassCompass is a multi-tenant system designed for managing and viewing academic schedules, institutional structures, and physical resources in educational entities. It allows multiple schools to operate on a shared infrastructure while keeping their data isolated.
+
+## Core Responsibilities
+
+The infrastructure repository coordinates the orchestration, deployment configurations, and runtime boundaries of the entire platform.
+
+- **Containerization**: Configures and manages the multi-service deployment using Docker Compose.
+- **Network Isolation**: Separates the application runtime and databases from the security services through isolated container networks.
+- **Reverse Proxy**: Deploys Ory Oathkeeper as an Identity-Aware Proxy (IAP) to inspect incoming request signatures before they reach the backend.
+
 ## Prerequisites
 
 - [Git](https://git-scm.com/downloads)
@@ -70,3 +82,9 @@ docker compose up -d
 ```
 
 This command will start all required containers for the application and monitor for new versions of the server and client images. When new versions are detected, they will be automatically pulled and started.
+
+## Links
+
+- [ClassCompassFrontend](https://github.com/shestakov-dev/ClassCompassFrontend)
+- [ClassCompassServer](https://github.com/shestakov-dev/ClassCompassServer)
+- [ClassCompassInfrastructure](https://github.com/shestakov-dev/ClassCompassInfrastructure)
